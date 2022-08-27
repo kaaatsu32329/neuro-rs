@@ -1,4 +1,5 @@
 use plotters::prelude::*;
+use crate::neuro::HodgkinHuxley;
 
 pub trait Plot {
     fn plot(&self, name: &str) -> Result<(), Box<dyn std::error::Error>>;
@@ -12,8 +13,8 @@ impl Plot for Vec<f32> {
             xs.push(i as u32);
         }
 
-        let width = 1080;
-        let height = 720;
+        let width = 1980;
+        let height = 1080;
         let path = format!("{}{}{}", "./graph/", name, ".png");
         let root = BitMapBackend::new(&path, (width, height)).into_drawing_area();
 
@@ -27,7 +28,7 @@ impl Plot for Vec<f32> {
 
         let mut chart;
 
-        if y_min < 0. {
+        if y_min.is_sign_negative() {
             chart = ChartBuilder::on(&root)
                 .caption(name, font.into_font())
                 .margin(10)
@@ -50,5 +51,11 @@ impl Plot for Vec<f32> {
         chart.draw_series(line_series)?;
 
         Ok(())
+    }
+}
+
+impl Plot for HodgkinHuxley {
+    fn plot(&self, name: &str) -> Result<(), Box<dyn std::error::Error>> {
+        todo!()
     }
 }

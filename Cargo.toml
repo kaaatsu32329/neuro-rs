@@ -11,3 +11,6 @@ plotters = "0.3.1"
 [[bin]]
 name = "hh_sim"
 path = "src/bin/hudgkin_huxley.rs"
+
+[features]
+print = []

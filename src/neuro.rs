@@ -12,10 +12,10 @@ const CAPACITANCE: f32 = 1.0;
 
 const STEP: usize = 3;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct HodgkinHuxley {
-    pub time: usize, // Experimental time
-    pub dt: f32,     // time step
+    time: usize, // Experimental time
+    pub dt: f32, // time step
     current_step: usize,
     pub voltage: Vec<f32>,
     pub i_na: Vec<f32>,
@@ -30,8 +30,8 @@ pub struct HodgkinHuxley {
 impl HodgkinHuxley {
     pub fn new() -> Self {
         Self {
-            time: 4000,
-            dt: 0.05,
+            time: 200000,
+            dt: 0.001,
             current_step: 0,
             voltage: vec![-65.],
             i_na: vec![0.],
@@ -69,17 +69,20 @@ impl HodgkinHuxley {
             self.intensity_leak();
             self.current_step += 1;
 
-            println!("voltage: {}", self.voltage[self.current_step]);
-            println!(
-                "i: {}, {}, {}",
-                self.i_na[self.current_step],
-                self.i_k[self.current_step],
-                self.i_leak[self.current_step]
-            );
-            println!(
-                "gate: {}, {}, {}\n",
-                self.m[self.current_step], self.h[self.current_step], self.n[self.current_step]
-            );
+            #[cfg(feature="print")]
+            {
+                println!("voltage: {}", self.voltage[self.current_step]);
+                println!(
+                    "i: {}, {}, {}",
+                    self.i_na[self.current_step],
+                    self.i_k[self.current_step],
+                    self.i_leak[self.current_step]
+                );
+                println!(
+                    "gate: {}, {}, {}\n",
+                    self.m[self.current_step], self.h[self.current_step], self.n[self.current_step]
+                );
+            }
         }
     }
 
