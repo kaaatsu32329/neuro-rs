@@ -12,6 +12,11 @@ const CAPACITANCE: f32 = 1.0;
 
 const STEP: usize = 3;
 
+const VOLTAGE_INIT: f32 = -65.;
+const GATE_M_INIT: f32 = 0.05;
+const GATE_H_INIT: f32 = 0.6;
+const GATE_N_INIT: f32 = 0.32;
+
 #[derive(Debug, Clone, Default)]
 pub struct HodgkinHuxley {
     time: usize, // Experimental time
@@ -33,14 +38,14 @@ impl HodgkinHuxley {
             time: 200000,
             dt: 0.001,
             current_step: 0,
-            voltage: vec![-65.],
+            voltage: vec![VOLTAGE_INIT],
             i_na: vec![0.],
             i_k: vec![0.],
             i_leak: vec![0.],
             i_injection: vec![0.],
-            m: vec![0.05],
-            h: vec![0.6],
-            n: vec![0.32],
+            m: vec![GATE_M_INIT],
+            h: vec![GATE_H_INIT],
+            n: vec![GATE_N_INIT],
         }
     }
 
@@ -69,7 +74,7 @@ impl HodgkinHuxley {
             self.intensity_leak();
             self.current_step += 1;
 
-            #[cfg(feature="print")]
+            #[cfg(feature = "print")]
             {
                 println!("voltage: {}", self.voltage[self.current_step]);
                 println!(
@@ -124,7 +129,7 @@ impl HodgkinHuxley {
     }
 
     fn alpha_h(&self) -> f32 {
-        0.07 * ((-self.voltage[self.current_step] - 65.) / 20.).exp()
+        0.07 * ((-self.voltage[self.current_step] + VOLTAGE_INIT) / 20.).exp()
     }
 
     fn alpha_n(&self) -> f32 {
@@ -133,7 +138,7 @@ impl HodgkinHuxley {
     }
 
     fn beta_m(&self) -> f32 {
-        4. * ((-self.voltage[self.current_step] - 65.) / 18.).exp()
+        4. * ((-self.voltage[self.current_step] + VOLTAGE_INIT) / 18.).exp()
     }
 
     fn beta_h(&self) -> f32 {
@@ -141,7 +146,7 @@ impl HodgkinHuxley {
     }
 
     fn beta_n(&self) -> f32 {
-        0.125 * ((-65. - self.voltage[self.current_step]) / 80.).exp()
+        0.125 * ((VOLTAGE_INIT - self.voltage[self.current_step]) / 80.).exp()
     }
 
     fn diff_membrane_potential(&self) -> f32 {
@@ -154,5 +159,64 @@ impl HodgkinHuxley {
 
     fn diff_gate(&self, alpha: f32, beta: f32, gate: f32) -> f32 {
         alpha * (1.0 - gate) - beta * gate
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use assert_approx_eq::assert_approx_eq;
+
+    use super::*;
+
+    #[test]
+    fn hodgkin_huxley() {
+        let mut hh_model = HodgkinHuxley::new();
+        hh_model.time = 1;
+        hh_model.dt = 0.001;
+
+        hh_model.calc();
+
+        assert_approx_eq!(hh_model.voltage[1], VOLTAGE_INIT);
+        assert_approx_eq!(
+            hh_model.i_na[1],
+            CONDUCTANCE_NA * GATE_M_INIT.powi(3) * GATE_H_INIT * VOLTAGE_INIT
+                - EQUILIBRIUM_VOLTAGE_NA
+        );
+        assert_approx_eq!(
+            hh_model.i_k[1],
+            CONDUCTANCE_K * GATE_N_INIT.powi(4) * (VOLTAGE_INIT - EQUILIBRIUM_VOLTAGE_K)
+        );
+        assert_approx_eq!(
+            hh_model.i_leak[1],
+            CONDUCTANCE_LEAK * (VOLTAGE_INIT - EQUILIBRIUM_VOLTAGE_LEAK)
+        );
+        assert_approx_eq!(hh_model.i_injection[1], 30.);
+        assert_approx_eq!(
+            hh_model.m[1],
+            GATE_M_INIT
+                + hh_model.diff_gate(
+                    0.1 * (-40. - VOLTAGE_INIT) / (((-40. - VOLTAGE_INIT) / 10.).exp() - 1.),
+                    4. * 0f32.exp(),
+                    GATE_M_INIT
+                ) * 0.001
+        );
+        assert_approx_eq!(
+            hh_model.h[1],
+            GATE_H_INIT
+                + hh_model.diff_gate(
+                    0.07 * 0f32.exp(),
+                    1. / (((-35. - VOLTAGE_INIT) / 10.).exp() + 1.),
+                    GATE_H_INIT
+                ) * 0.001
+        );
+        assert_approx_eq!(
+            hh_model.n[1],
+            GATE_N_INIT
+                + hh_model.diff_gate(
+                    0.01 * (-55. - VOLTAGE_INIT) / (((-55. - VOLTAGE_INIT) / 10.).exp() - 1.),
+                    0.125 * 0f32.exp(),
+                    GATE_N_INIT
+                ) * 0.001
+        );
     }
 }
