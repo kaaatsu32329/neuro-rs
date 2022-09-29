@@ -1,4 +1,4 @@
-use neuro_rs::neuro::HodgkinHuxley;
+use neuro_rs::hodgkin_huxley::HodgkinHuxley;
 use neuro_rs::plot::Plot;
 
 fn main() {

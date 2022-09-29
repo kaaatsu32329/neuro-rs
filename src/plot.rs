@@ -1,5 +1,5 @@
+use crate::hodgkin_huxley::HodgkinHuxley;
 use plotters::prelude::*;
-use crate::neuro::HodgkinHuxley;
 
 pub trait Plot {
     fn plot(&self, name: &str) -> Result<(), Box<dyn std::error::Error>>;
