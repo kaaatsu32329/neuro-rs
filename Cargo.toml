@@ -8,6 +8,9 @@ edition = "2021"
 [dependencies]
 plotters = "0.3.1"
 
+[dev-dependencies]
+assert_approx_eq = "1.1"
+
 [[bin]]
 name = "hh_sim"
 path = "src/bin/hudgkin_huxley.rs"
